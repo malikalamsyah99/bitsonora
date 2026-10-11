@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bitsonora"
+version = "0.1.0"
+description = "Cross-platform audio converter with metadata and album artwork preservation"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "PySide6",
+    "mutagen",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+bitsonora = "bitsonora.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
