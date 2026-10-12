@@ -1,52 +1,78 @@
 # Bitsonora
 
-**A cross-platform desktop audio converter with metadata and album artwork preservation.**
+<p align="center">
+  <img src="assets/bitsonora.png" alt="Bitsonora application icon" width="150">
+</p>
 
-Bitsonora is a desktop application built with Python, PySide6, and FFmpeg. It provides a graphical interface for batch-converting audio files to MP3, configuring output audio properties, and checking converted files.
+<p align="center">
+  <strong>A cross-platform desktop audio converter focused on batch conversion, metadata, and album artwork preservation.</strong>
+</p>
 
-> **Project status:** Early development. The macOS app has been built and tested locally. Windows and Linux builds, self-contained FFmpeg packaging, and a public release have not yet been verified.
+<p align="center">
+  <a href="https://github.com/malikalamsyah99/bitsonora">Source code</a> ·
+  <a href="https://github.com/malikalamsyah99/bitsonora/issues">Report a bug</a> ·
+  <a href="https://malikalamsyah99.github.io/">Developer website</a>
+</p>
+
+Bitsonora is a desktop audio converter built with Python, PySide6, and FFmpeg. It provides a graphical interface for converting multiple audio files to MP3, choosing output audio settings, and inspecting converted files. The project aims to preserve supported metadata and embedded album artwork while making batch conversion straightforward.
+
+> **Project status:** Early development. The macOS application has been built and tested locally, including conversion from the packaged app and a DMG test package. Windows and Linux application packages have not yet been verified. macOS signing and notarization for public distribution are not configured yet.
 
 ## Contents
 
-- [Features](#features)
-- [Supported Formats](#supported-formats)
+- [Highlights](#highlights)
+- [Application preview](#application-preview)
+- [Supported formats](#supported-formats)
 - [Requirements](#requirements)
-- [Installation](#installation)
-- [Run from Source](#run-from-source)
-- [How to Use](#how-to-use)
-- [Output Settings](#output-settings)
-- [PSPMAN Preset](#pspman-preset)
-- [Metadata and Album Artwork](#metadata-and-album-artwork)
-- [Output Validation](#output-validation)
-- [Project Structure](#project-structure)
-- [Development and Testing](#development-and-testing)
-- [Build for macOS](#build-for-macos)
+- [Quick start](#quick-start)
+- [Running Bitsonora](#running-bitsonora)
+- [Using the application](#using-the-application)
+- [Output settings](#output-settings)
+- [PSPMAN preset](#pspman-preset)
+- [Metadata and album artwork](#metadata-and-album-artwork)
+- [Output validation](#output-validation)
+- [Project structure](#project-structure)
+- [Development commands](#development-commands)
+- [Building the macOS application](#building-the-macos-application)
+- [Creating a macOS DMG](#creating-a-macos-dmg)
+- [Build notes and distribution](#build-notes-and-distribution)
 - [Troubleshooting](#troubleshooting)
-- [Known Limitations](#known-limitations)
+- [Current limitations](#current-limitations)
 - [Roadmap](#roadmap)
+- [Contributing](#contributing)
 - [Developer](#developer)
 - [License](#license)
 
-## Features
+## Highlights
 
-- Batch conversion of multiple audio files or files discovered in a selected folder.
-- Graphical desktop interface built with PySide6.
-- Configurable MP3 bitrate, sample rate, and mono/stereo output.
-- Metadata mapping during conversion, where supported by the source and output formats.
-- Embedded album artwork mapping, where supported by FFmpeg and the involved formats.
-- Output inspection using FFprobe.
-- Per-file conversion status and a final success/failure summary.
-- Continues processing remaining files when an individual conversion fails.
-- Avoids intentionally overwriting an existing output file.
-- PSPMAN preset for MP3 at 44.1 kHz stereo.
-- About dialog with developer profile, source repository, and website links.
-- Custom Bitsonora branding for the macOS application.
+- **Batch conversion:** add multiple audio files or scan a folder for supported files.
+- **Desktop GUI:** choose input files, output directory, bitrate, sample rate, and channel count without typing FFmpeg commands.
+- **MP3 output:** select 128, 192, 256, or 320 kbps.
+- **Sample-rate options:** choose 44,100 Hz or 48,000 Hz.
+- **Mono or stereo output:** choose the desired output channel layout.
+- **Metadata mapping:** pass source metadata to FFmpeg when converting.
+- **Embedded cover art:** attempt to map optional embedded image streams into the MP3 output.
+- **Post-conversion checks:** inspect the output with FFprobe and read common ID3 tags with Mutagen.
+- **Per-file results:** show successful and failed files in the conversion log.
+- **Batch resilience:** a failure for one file does not normally stop processing the remaining files.
+- **Overwrite protection:** an output that already exists is not intentionally overwritten.
+- **PSPMAN preset:** quickly select MP3, 44.1 kHz, stereo, and the default 192 kbps bitrate.
+- **About dialog:** links to the developer profile, repository, and website.
+- **Custom application branding:** the repository includes the Bitsonora PNG artwork and macOS ICNS/iconset assets.
 
-## Supported Formats
+## Application preview
+
+The GUI includes file/folder selection, an output-directory field, conversion settings, a preset selector, progress indicator, a conversion log, and a **Help → About Bitsonora** menu.
+
+Screenshots can be added to this section when they are committed to the repository. For now, the application logo above is the committed visual asset.
+
+## Supported formats
 
 ### Input formats
 
-| Format | Extensions |
+The current input-file filter and conversion engine support these extensions:
+
+| Format | Extension |
 |---|---|
 | MPEG-4 Audio | `.m4a` |
 | Advanced Audio Coding | `.aac` |
@@ -55,44 +81,30 @@ Bitsonora is a desktop application built with Python, PySide6, and FFmpeg. It pr
 | Ogg audio | `.ogg` |
 | Opus audio | `.opus` |
 
-Actual decoding support depends on the installed FFmpeg build and the codecs used by a source file.
+Actual decoding depends on the codecs enabled in the FFmpeg executable and the content of the source file. A file extension alone does not guarantee that every codec or metadata variation can be handled.
 
 ### Output format
 
-The current conversion engine outputs **MP3**. Other output formats are not implemented in the current GUI.
+The current application produces **MP3** files. Other output formats are not currently implemented in the GUI.
 
 ## Requirements
 
+### For development from source
+
 - Python 3.9 or newer
-- FFmpeg and FFprobe available to the application
 - PySide6
 - Mutagen
-- PyInstaller for packaging the macOS application
+- FFmpeg and FFprobe available to the application
+- PyInstaller for packaging
+- `static-ffmpeg` for the current helper script that fetches platform-specific executables
 
-### Install FFmpeg
+### For the tested macOS bundle
 
-#### macOS (Homebrew)
+The current macOS packaging configuration places `ffmpeg` and `ffprobe` inside the application bundle. The bundled application has been tested locally on the developer's Mac. This should not be interpreted as confirmation that all macOS versions or other processor architectures have been tested.
 
-```bash
-brew install ffmpeg
-```
+Windows and Linux users can run from source after installing suitable FFmpeg/FFprobe executables, but packaged application builds for those platforms are not yet verified.
 
-#### Windows
-
-Install an FFmpeg build for Windows and make sure `ffmpeg` and `ffprobe` are available through `PATH`. See the official FFmpeg download page:
-
-https://ffmpeg.org/download.html
-
-#### Debian/Ubuntu Linux
-
-```bash
-sudo apt update
-sudo apt install ffmpeg
-```
-
-Other Linux distributions may use different package managers or package names.
-
-## Installation
+## Quick start
 
 ### 1. Clone the repository
 
@@ -101,23 +113,23 @@ git clone https://github.com/malikalamsyah99/bitsonora.git
 cd bitsonora
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
-macOS and Linux:
+#### macOS and Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Windows PowerShell:
+#### Windows PowerShell
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Install Bitsonora and development dependencies
+### 3. Install Python dependencies
 
 From the repository root, run:
 
@@ -126,7 +138,32 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-### 4. Verify dependencies
+The editable install makes the `bitsonora` package importable from the `src` layout while working on the project.
+
+### 4. Install FFmpeg for source development
+
+#### macOS with Homebrew
+
+```bash
+brew install ffmpeg
+```
+
+#### Debian or Ubuntu Linux
+
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+#### Windows
+
+Install an FFmpeg build that contains both `ffmpeg` and `ffprobe`, then make sure the executables are available on `PATH`. Consult the official FFmpeg download page for links to builds and platform information:
+
+https://ffmpeg.org/download.html
+
+Other Linux distributions may use a different package manager or package name.
+
+### 5. Verify the environment
 
 ```bash
 python -c "import PySide6, mutagen; print('Python dependencies OK')"
@@ -134,57 +171,73 @@ ffmpeg -version
 ffprobe -version
 ```
 
-The Python import test and both FFmpeg commands should complete successfully.
+The Python import command and both FFmpeg commands should complete successfully.
 
-## Run from Source
+## Running Bitsonora
 
-Activate the virtual environment and run this from the repository root:
+With the virtual environment active and the repository root as the working directory, launch the GUI with:
 
 ```bash
 python -m bitsonora.main
 ```
 
-The Bitsonora desktop window should open.
+The application entry point can also be launched with:
 
-## How to Use
+```bash
+python run_bitsonora.py
+```
 
-1. **Add files:** Select **Add Files** to choose one or more supported audio files.
-2. **Add a folder:** Select **Add Folder** to scan a directory. Enable the subfolder option if nested directories should also be scanned.
-3. **Choose output:** Select the destination folder for converted MP3 files.
-4. **Configure audio:** Select bitrate, sample rate, and channel configuration, or choose the PSPMAN preset.
-5. **Convert:** Click **Convert to MP3** and follow the progress bar and conversion log.
-6. **Review:** Check the final success/failure summary and inspect the output folder.
+## Using the application
 
-Use a separate output folder from the source whenever practical. Existing output files are not intentionally overwritten.
+1. **Add files:** click **Add Files** to select one or more audio files.
+2. **Add a folder:** click **Add Folder** to select a directory containing supported audio files.
+3. **Review inputs:** use **Remove Selected** or **Clear** to adjust the input list.
+4. **Choose the output directory:** set the folder where converted MP3 files will be saved.
+5. **Set audio options:** choose bitrate, sample rate, and mono/stereo output.
+6. **Choose a preset if needed:** select the PSPMAN preset to apply its default settings.
+7. **Convert:** click **Convert to MP3**.
+8. **Review the result:** inspect progress, per-file log entries, the success/failure summary, and the output folder.
 
-## Output Settings
+Folder scanning is non-recursive by default. Enable **Include subfolders when scanning folders** to include nested directories.
+
+For safety, use an output folder separate from the source folder when practical. Bitsonora does not intentionally overwrite an existing output file; an existing destination is reported as a per-file failure so that prior output is not silently replaced.
+
+## Output settings
 
 ### Bitrate
 
-The GUI offers these MP3 bitrate settings:
+The GUI provides these MP3 bitrate choices:
 
 - 128 kbps
 - 192 kbps
 - 256 kbps
 - 320 kbps
 
-A higher bitrate generally creates a larger file. Upscaling a lossy source to a higher bitrate does not restore audio information already lost in the source.
+A higher bitrate normally creates a larger file. Transcoding an already-lossy audio source to a higher bitrate does not restore audio information that was lost in the original encoding.
 
 ### Sample rate
+
+Available options:
 
 - 44,100 Hz
 - 48,000 Hz
 
 ### Channels
 
-- Stereo
-- Mono
+Available options:
 
-The selected sample rate and channel configuration are applied during conversion.
+- Stereo (2 channels)
+- Mono (1 channel)
 
-## PSPMAN Preset
+The selected sample rate and channel count are applied during conversion and checked by the output validator.
 
-The GUI includes **PSPMAN - MP3 44.1 kHz Stereo**, which selects:
+## PSPMAN preset
+
+Bitsonora includes the preset:
+
+**PSPMAN - MP3 44.1 kHz Stereo**
+
+Selecting it applies these default settings:
 
 | Setting | Value |
 |---|---|
@@ -193,11 +246,13 @@ The GUI includes **PSPMAN - MP3 44.1 kHz Stereo**, which selects:
 | Sample rate | 44,100 Hz |
 | Channels | Stereo |
 
-You can change the bitrate after selecting the preset. This preset targets the audio configuration used during PSPMAN compatibility testing; playback should still be verified on the target device because player and metadata support can vary.
+The bitrate can still be changed after selecting the preset. The preset targets the MP3 audio configuration used during local PSPMAN compatibility testing. Playback should still be checked on the target device; device behavior and metadata support can vary.
 
-## Metadata and Album Artwork
+## Metadata and album artwork
 
-The conversion engine asks FFmpeg to map source metadata and optional image streams into the output. Mutagen is used to inspect common MP3 ID3 fields such as:
+The converter uses FFmpeg stream mapping and metadata mapping to carry supported source metadata and optional embedded picture streams into the MP3 output. The exact result depends on the source container, its tags, embedded image format, and FFmpeg's handling of those streams.
+
+The metadata-inspection module uses Mutagen to read common ID3 fields, including:
 
 - Title
 - Artist
@@ -206,25 +261,28 @@ The conversion engine asks FFmpeg to map source metadata and optional image stre
 - Track number
 - Date
 - Genre
-- Embedded cover artwork
+- Whether embedded cover artwork is detected
+- Cover-art count and image MIME types
 
-Preservation depends on the source file, metadata format, image format, and FFmpeg's ability to map the relevant streams. The current implementation inspects common ID3 tags and reports whether cover artwork is detected. It does not yet compare every metadata field against the source automatically.
+Artwork and metadata preservation have been verified on sample files during local development, but not on every possible source format or tag variant. The validator currently reports metadata/artwork information; it does not yet compare every tag in the source against the output or fail a conversion solely because artwork is absent.
 
-## Output Validation
+## Output validation
 
-After conversion, Bitsonora uses FFprobe to inspect the generated MP3. Checks include:
+After a file is converted, the batch engine invokes the validator. Current checks include:
 
-- Output file exists and is not empty.
+- Output file exists and is non-empty.
+- FFprobe can inspect the output.
 - An audio stream is present.
-- The codec is MP3.
-- Sample rate matches the selected setting.
-- Channel count matches the selected setting.
+- Audio codec is MP3.
+- Sample rate matches the requested setting.
+- Channel count matches the requested setting.
 - Duration is positive.
-- Reported bitrate is approximately within the configured target range, when the stream reports a bitrate.
+- When FFprobe reports a bitrate, it is approximately within the configured target tolerance.
+- Common ID3 metadata and cover-art presence are returned for inspection.
 
-Metadata inspection is also returned by the validator. These checks help detect common conversion issues but do not replace listening tests or compatibility checks on a target device.
+Validation helps detect common output issues. It is not a substitute for listening tests or compatibility testing on a target player. Bitrate reporting can vary for some MP3 streams, so the validator treats unavailable bitrate information differently from an explicit mismatch.
 
-## Project Structure
+## Project structure
 
 ```text
 bitsonora/
@@ -243,6 +301,9 @@ bitsonora/
 │       ├── resources.py
 │       └── about.py
 ├── tests/
+├── tools/
+│   ├── fetch_ffmpeg.py
+│   └── build_dmg.sh
 ├── .github/
 │   └── workflows/
 ├── pyproject.toml
@@ -254,24 +315,38 @@ bitsonora/
 
 ### Main modules
 
-| File | Purpose |
+| File | Responsibility |
 |---|---|
-| `main.py` | PySide6 desktop GUI and application entry point |
-| `converter.py` | Single-file FFmpeg conversion |
-| `batch.py` | Input discovery, batch processing, and per-file results |
-| `metadata.py` | Inspection of MP3 ID3 tags and artwork |
-| `validator.py` | Validation of converted audio properties |
-| `resources.py` | Resource path lookup in source and bundled app contexts |
+| `main.py` | PySide6 desktop GUI, settings, worker thread, and application entry point |
+| `converter.py` | Single-file FFmpeg conversion and executable lookup |
+| `batch.py` | Input scanning, batch conversion, and per-file result reporting |
+| `metadata.py` | Inspection of MP3 ID3 tags and cover artwork using Mutagen |
+| `validator.py` | Validation of MP3 codec, rate, channels, duration, and reported bitrate |
+| `resources.py` | Locating application assets in development and PyInstaller contexts |
 | `about.py` | About dialog and developer links |
-| `pyproject.toml` | Project metadata and Python dependencies |
-| `Bitsonora.spec` | PyInstaller build configuration |
+| `tools/fetch_ffmpeg.py` | Fetches and verifies platform-specific FFmpeg/FFprobe executables for a build |
+| `tools/build_dmg.sh` | Creates and verifies a macOS DMG containing the app and an Applications shortcut |
+| `Bitsonora.spec` | PyInstaller bundle configuration |
+| `pyproject.toml` | Project metadata, dependencies, and console entry point |
 
-## Development and Testing
+## Development commands
 
-### Run the application
+### Install development dependencies
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+### Run from source
 
 ```bash
 python -m bitsonora.main
+```
+
+### Compile-check the Python source
+
+```bash
+python -m compileall -q src/bitsonora tools/fetch_ffmpeg.py
 ```
 
 ### Run automated tests
@@ -280,60 +355,113 @@ python -m bitsonora.main
 python -m pytest
 ```
 
-The test suite is still being developed. A successful pytest run does not imply that every input format, metadata variant, or operating system has been tested.
+The automated test suite is still being developed. The current repository has limited automated test coverage; a successful pytest run should not be interpreted as proof that all formats, metadata combinations, and operating systems have been tested.
 
-## Build for macOS
+## Building the macOS application
 
-Install PyInstaller into the active virtual environment:
+The current macOS bundle configuration includes FFmpeg and FFprobe under the app bundle. The build workflow below describes the project's current local packaging approach, not a signed/notarized release pipeline.
 
-```bash
-python -m pip install pyinstaller
-```
+### 1. Install the build dependencies
 
-Run the following command from the repository root:
+Activate the project virtual environment and install the development extras:
 
 ```bash
-python -m PyInstaller \
-  --noconfirm \
-  --clean \
-  --windowed \
-  --name Bitsonora \
-  --icon assets/bitsonora.icns \
-  --add-data "assets/bitsonora.png:assets" \
-  --paths src \
-  --collect-all PySide6 \
-  --collect-all shiboken6 \
-  run_bitsonora.py
+python -m pip install -e ".[dev]"
 ```
 
-The application bundle should be created at:
+### 2. Fetch FFmpeg and FFprobe
+
+Run from the repository root:
+
+```bash
+python tools/fetch_ffmpeg.py
+```
+
+The script downloads/resolves platform-specific executables using `static-ffmpeg`, copies them into `vendor/ffmpeg/`, marks them executable on POSIX systems, and verifies that both can run. The `vendor/ffmpeg/` directory is ignored by Git because the binaries are downloaded as part of preparing a build.
+
+Inspect the downloaded executables if needed:
+
+```bash
+ls -lh vendor/ffmpeg/
+./vendor/ffmpeg/ffmpeg -version
+./vendor/ffmpeg/ffprobe -version
+```
+
+### 3. Build the app bundle
+
+```bash
+python -m PyInstaller --noconfirm --clean Bitsonora.spec
+```
+
+Expected app bundle:
 
 ```text
 dist/Bitsonora.app
 ```
 
-Open it on macOS with:
+Open the app with:
 
 ```bash
 open dist/Bitsonora.app
 ```
 
-This is a development build, not a signed and notarized public release. The current bundle does not yet include a fully managed, self-contained FFmpeg/FFprobe distribution; those executables must still be available to the application.
+Test launching the app and converting a sample file after each packaging change. Verify that the bundled `ffmpeg` and `ffprobe` are present inside the app bundle:
+
+```bash
+find dist/Bitsonora.app -type f \
+  \( -name ffmpeg -o -name ffprobe \) -print
+```
+
+The macOS bundle has been tested locally on the developer's machine. Other macOS versions and processor architectures still require testing.
+
+## Creating a macOS DMG
+
+After building and testing `dist/Bitsonora.app`, create a DMG with:
+
+```bash
+./tools/build_dmg.sh
+```
+
+The script copies the app to a temporary staging directory, adds a symbolic link to `/Applications`, creates a compressed read-only disk image, and verifies the image.
+
+Expected output:
+
+```text
+dist/Bitsonora-macOS.dmg
+```
+
+Open the DMG with:
+
+```bash
+open dist/Bitsonora-macOS.dmg
+```
+
+In Finder, drag `Bitsonora.app` to the `Applications` shortcut to install a copy. The mounted DMG is a separate location; eject it after installation. The build output under `dist/` is also a separate development copy.
+
+## Build notes and distribution
+
+- The present DMG is a local test package, not yet a signed and notarized public release.
+- Apple Developer ID signing and notarization have not been configured.
+- First-launch Gatekeeper behavior should be tested on a clean Mac before public distribution.
+- The current FFmpeg fetching/build flow still needs a platform-by-platform release policy and broader testing before being used for Windows and Linux packages.
+- Before redistributing FFmpeg binaries, review the exact binary build configuration and license obligations, and include all required notices. FFmpeg licensing varies with the libraries and options enabled in a particular build.
+- The current workflow creates a macOS app bundle and DMG. It does not yet produce verified Windows installers or Linux packages.
+- Do not upload `vendor/ffmpeg/`, `.venv/`, `build/`, or `dist/` to the source repository. These are local environment, downloaded executable, or build-output directories and are ignored by Git.
 
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'bitsonora'`
 
-From the repository root with the virtual environment active, run:
+From the repository root, with the virtual environment active, install the package in editable mode:
 
 ```bash
 python -m pip install -e .
 python -c "import bitsonora; print(bitsonora.__file__)"
 ```
 
-### `ffmpeg: command not found`
+### `ffmpeg` or `ffprobe` cannot be found
 
-Check whether FFmpeg and FFprobe are installed and accessible through `PATH`.
+For development from source, install FFmpeg and make both executables available on `PATH`.
 
 macOS/Linux:
 
@@ -342,60 +470,93 @@ which ffmpeg
 which ffprobe
 ```
 
-Windows Command Prompt or PowerShell:
+Windows:
 
 ```powershell
 where.exe ffmpeg
 where.exe ffprobe
 ```
 
-After changing `PATH`, restart the terminal or application.
+For packaged builds, confirm that the binary files were fetched into `vendor/ffmpeg/` before building and that they were included in the application bundle.
 
-### Output file already exists
+### An output file already exists
 
-Bitsonora refuses to overwrite an existing output file. Select a different output directory or handle the existing file before retrying.
+Bitsonora does not intentionally overwrite an existing output file. Select another destination folder or handle the prior output before retrying.
 
-### A file fails to convert
+### A file fails during conversion
 
-Read the specific error in the conversion log. Confirm that the input file is readable, its extension is supported, and FFmpeg can decode its codec.
+Inspect the specific failure message in the conversion log. Verify that the source is readable, its extension is supported, and FFmpeg can decode its stream. A failed item should not normally prevent the rest of the batch from continuing.
 
-### macOS still shows the old icon
+### The app opens but conversion fails
 
-Confirm that the latest build was generated and that you are opening `dist/Bitsonora.app`, not an older copy. Finder and Dock can temporarily cache application icons.
+Check whether the bundled `ffmpeg` and `ffprobe` executables exist and are executable. For a macOS bundle, use the `find` command in the build section to locate them. Rebuild after ensuring the expected binaries are available.
 
-## Known Limitations
+### Finder shows multiple copies of Bitsonora
 
-- MP3 is the only implemented output format.
-- FFmpeg and FFprobe are external dependencies and are not yet fully bundled for distribution.
-- Signed and notarized macOS distribution is not configured.
-- Windows and Linux builds have not yet been verified.
-- Automated tests still need broader coverage for conversion, metadata, artwork, and error handling.
-- Metadata inspection focuses on common ID3 tags.
-- Cancellation of an active batch is not implemented.
-- Duplicate output names from separate input directories can conflict when saved to one destination folder.
-- Successful validation does not guarantee playback on every audio player or target device.
+The source build (`dist/Bitsonora.app`), an installed app (`/Applications/Bitsonora.app`), a staged copy (`build/dmg/Bitsonora.app`), and a mounted DMG copy (`/Volumes/Bitsonora/Bitsonora.app`) are separate copies. Keep the installed app for daily use, and eject the DMG when finished. The temporary staging directory can be removed after the DMG has been verified.
+
+### macOS still displays an old icon
+
+Confirm that the latest app was rebuilt and open the intended path. Finder and Dock may temporarily cache application icons.
+
+### The app cannot be opened on another Mac
+
+The current package is not yet a signed and notarized public release. Verify the build on a clean machine and configure appropriate signing/notarization before distributing broadly.
+
+## Current limitations
+
+- MP3 is currently the only implemented output format.
+- Automated test coverage is limited and needs to be expanded.
+- The metadata inspector focuses on common ID3 fields.
+- Metadata and artwork are not yet compared field-by-field with the original source as a strict preservation test.
+- Canceling a running batch is not implemented.
+- Duplicate output filenames from different source directories can conflict when they are written to one output folder.
+- Successful technical validation does not guarantee playback on every audio player or target device.
+- macOS signing and notarization are not configured.
+- Windows and Linux packaged builds have not yet been verified.
+- The bundled FFmpeg licensing/notice workflow must be reviewed before public release.
 
 ## Roadmap
 
-- [ ] Bundle or reliably manage FFmpeg and FFprobe for distribution.
-- [ ] Expand tests for audio conversion, metadata, and cover art.
-- [ ] Add safe cancellation for active conversions.
-- [ ] Handle duplicate output filenames from different source directories.
-- [ ] Build and test Windows packages.
-- [ ] Build and test Linux packages.
-- [ ] Prepare signed and notarized macOS distribution.
-- [ ] Publish application packages through GitHub Releases.
+- [x] Build a PySide6 desktop GUI.
+- [x] Convert batches of supported audio files to MP3.
+- [x] Add bitrate, sample rate, and channel settings.
+- [x] Add a PSPMAN preset.
+- [x] Inspect common metadata and embedded cover artwork.
+- [x] Validate key output audio properties with FFprobe.
+- [x] Add a custom application icon and About dialog.
+- [x] Build and test a local macOS app bundle.
+- [x] Create a local macOS DMG test package.
+- [x] Bundle FFmpeg and FFprobe in the tested macOS app build.
+- [ ] Expand automated tests for conversion, metadata, and artwork.
+- [ ] Compare source metadata against output metadata in preservation tests.
+- [ ] Add safe cancellation for active batches.
+- [ ] Handle duplicate output filenames across source directories.
+- [ ] Review FFmpeg license obligations and include required notices.
+- [ ] Sign and notarize the macOS release.
+- [ ] Build and verify Windows packages.
+- [ ] Build and verify Linux packages.
+- [ ] Publish versioned releases through GitHub Releases.
+
+## Contributing
+
+Contributions, bug reports, and feature suggestions are welcome. Before opening a pull request:
+
+1. Describe the issue or proposed change.
+2. Test the relevant code path locally.
+3. Include reproduction details for conversion or packaging failures.
+4. Avoid committing local environments, downloaded FFmpeg binaries, or build outputs.
+
+Open bug reports and feature requests through [GitHub Issues](https://github.com/malikalamsyah99/bitsonora/issues).
 
 ## Developer
 
 **Malik Alamsyah**
 
 - **GitHub profile:** https://github.com/malikalamsyah99
-- **Source repository:** https://github.com/malikalamsyah99/bitsonora
+- **Bitsonora repository:** https://github.com/malikalamsyah99/bitsonora
 - **Developer website:** https://malikalamsyah99.github.io/
-
-For bug reports and feature requests, use [GitHub Issues](https://github.com/malikalamsyah99/bitsonora/issues).
 
 ## License
 
-No license has been added to this repository yet. Until a license is added, permissions for reuse and redistribution have not been explicitly granted. Choose and add an appropriate license before inviting the public to reuse the code.
+No project license file has been added yet. Until a license is selected and included, the repository does not explicitly grant permissions to reuse, modify, or redistribute the project code. Choose and add a license before inviting others to reuse the source. FFmpeg is a separate project and its binary license and notices must be assessed independently for the exact build being redistributed.
