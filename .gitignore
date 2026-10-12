@@ -7,3 +7,6 @@ build/
 dist/
 .DS_Store
 .env
+
+# Downloaded platform-specific FFmpeg binaries
+vendor/ffmpeg/

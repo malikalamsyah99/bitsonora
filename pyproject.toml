@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "pyinstaller", "static-ffmpeg"]
 
 [project.scripts]
 bitsonora = "bitsonora.main:main"

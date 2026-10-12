@@ -1,18 +1,37 @@
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_all
 
-datas = [('assets/bitsonora.png', 'assets')]
-binaries = []
+import os
+from pathlib import Path
+
+ROOT = Path(SPECPATH)
+ASSETS = ROOT / "assets"
+FFMPEG_DIR = ROOT / "vendor" / "ffmpeg"
+
+suffix = ".exe" if os.name == "nt" else ""
+
+ffmpeg_path = FFMPEG_DIR / f"ffmpeg{suffix}"
+ffprobe_path = FFMPEG_DIR / f"ffprobe{suffix}"
+icon_path = ASSETS / ("bitsonora.ico" if os.name == "nt"
+                      else "bitsonora.icns")
+
+for required in (ffmpeg_path, ffprobe_path, ASSETS / "bitsonora.png"):
+    if not required.is_file():
+        raise SystemExit(f"Required build file is missing: {required}")
+
+datas = [
+    (str(ASSETS / "bitsonora.png"), "assets"),
+]
+
+binaries = [
+    (str(ffmpeg_path), "bin"),
+    (str(ffprobe_path), "bin"),
+]
+
 hiddenimports = []
-tmp_ret = collect_all('PySide6')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-tmp_ret = collect_all('shiboken6')
-datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
-
 
 a = Analysis(
-    ['run_bitsonora.py'],
-    pathex=['src'],
+    [str(ROOT / "run_bitsonora.py")],
+    pathex=[str(ROOT / "src")],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,
@@ -23,6 +42,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -30,31 +50,33 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Bitsonora',
+    name="Bitsonora",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['assets/bitsonora.icns'],
+    icon=str(icon_path),
 )
+
 coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
-    name='Bitsonora',
+    name="Bitsonora",
 )
+
 app = BUNDLE(
     coll,
-    name='Bitsonora.app',
-    icon='assets/bitsonora.icns',
-    bundle_identifier=None,
+    name="Bitsonora.app",
+    icon=str(icon_path),
+    bundle_identifier="com.malikalamsyah99.bitsonora",
 )

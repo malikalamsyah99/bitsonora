@@ -1,28 +1,44 @@
 from pathlib import Path
+import os
 import shutil
 import subprocess
+import sys
 
 
 SUPPORTED_INPUTS = {".m4a", ".aac", ".wav", ".flac", ".ogg", ".opus"}
 
 
 def require_tool(name: str) -> str:
-    """Find an executable in PATH or common Homebrew locations."""
-    path = shutil.which(name)
-    if path:
-        return path
+    """Prefer bundled executables, then fall back to system tools."""
+    executable = f"{name}.exe" if os.name == "nt" else name
+    candidates = []
 
-    candidates = [
-        Path("/opt/homebrew/bin") / name,
-        Path("/usr/local/bin") / name,
-    ]
+    bundle_dir = getattr(sys, "_MEIPASS", None)
+    if bundle_dir:
+        candidates.append(Path(bundle_dir) / "bin" / executable)
+        candidates.append(Path(bundle_dir) / executable)
+
+    executable_dir = Path(sys.executable).resolve().parent
+    candidates.append(executable_dir / "bin" / executable)
 
     for candidate in candidates:
-        if candidate.is_file():
+        if candidate.is_file() and (
+            os.name == "nt" or os.access(candidate, os.X_OK)
+        ):
             return str(candidate)
 
+    system_path = shutil.which(name)
+    if system_path:
+        return system_path
+
+    if sys.platform == "darwin":
+        for prefix in ("/opt/homebrew/bin", "/usr/local/bin"):
+            candidate = Path(prefix) / name
+            if candidate.is_file():
+                return str(candidate)
+
     raise RuntimeError(
-        f"{name} was not found. Install FFmpeg and ensure it is available."
+        f"{name} was not found in the application bundle or system PATH."
     )
 
 
