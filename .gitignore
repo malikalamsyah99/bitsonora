@@ -10,3 +10,4 @@ dist/
 
 # Downloaded platform-specific FFmpeg binaries
 vendor/ffmpeg/
+assets/bitsonora.ico

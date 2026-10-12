@@ -1,0 +1,118 @@
+name: Test and Build Bitsonora
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Check Python syntax
+        run: python -m compileall -q src/bitsonora tools tests
+
+      - name: Run tests
+        run: python -m pytest -q
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: test
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: macos-arm64
+            family: macos
+
+          - runner: macos-15-intel
+            target: macos-x64
+            family: macos
+
+          - runner: windows-latest
+            target: windows-x64
+            family: windows
+
+          - runner: ubuntu-24.04
+            target: linux-x64
+            family: linux
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Generate Windows icon
+        if: matrix.family == 'windows'
+        run: |
+          python -c "from PIL import Image; image = Image.open('assets/bitsonora.png').convert('RGBA'); image.save('assets/bitsonora.ico', format='ICO', sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])"
+
+      - name: Fetch FFmpeg and FFprobe
+        run: python tools/fetch_ffmpeg.py
+
+      - name: Build application
+        run: python -m PyInstaller --noconfirm --clean Bitsonora.spec
+
+      - name: Create macOS DMG
+        if: matrix.family == 'macos'
+        run: ./tools/build_dmg.sh
+
+      - name: Upload macOS installer
+        if: matrix.family == 'macos'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Bitsonora-${{ matrix.target }}
+          path: dist/Bitsonora-macOS.dmg
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Windows build
+        if: matrix.family == 'windows'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Bitsonora-${{ matrix.target }}
+          path: dist/Bitsonora/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Linux build
+        if: matrix.family == 'linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Bitsonora-${{ matrix.target }}
+          path: dist/Bitsonora/
+          if-no-files-found: error
+          retention-days: 30

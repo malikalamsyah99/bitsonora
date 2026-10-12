@@ -1,22 +1,36 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os
+import sys
 from pathlib import Path
 
-ROOT = Path(SPECPATH)
+ROOT = Path(SPECPATH).resolve()
 ASSETS = ROOT / "assets"
 FFMPEG_DIR = ROOT / "vendor" / "ffmpeg"
 
 suffix = ".exe" if os.name == "nt" else ""
-
 ffmpeg_path = FFMPEG_DIR / f"ffmpeg{suffix}"
 ffprobe_path = FFMPEG_DIR / f"ffprobe{suffix}"
-icon_path = ASSETS / ("bitsonora.ico" if os.name == "nt"
-                      else "bitsonora.icns")
 
-for required in (ffmpeg_path, ffprobe_path, ASSETS / "bitsonora.png"):
-    if not required.is_file():
-        raise SystemExit(f"Required build file is missing: {required}")
+if sys.platform == "darwin":
+    icon_path = ASSETS / "bitsonora.icns"
+elif sys.platform == "win32":
+    icon_path = ASSETS / "bitsonora.ico"
+else:
+    icon_path = None
+
+required = [
+    ffmpeg_path,
+    ffprobe_path,
+    ASSETS / "bitsonora.png",
+]
+
+if icon_path is not None:
+    required.append(icon_path)
+
+for item in required:
+    if not item.is_file():
+        raise SystemExit(f"Required build file is missing: {item}")
 
 datas = [
     (str(ASSETS / "bitsonora.png"), "assets"),
@@ -27,14 +41,12 @@ binaries = [
     (str(ffprobe_path), "bin"),
 ]
 
-hiddenimports = []
-
 a = Analysis(
     [str(ROOT / "run_bitsonora.py")],
     pathex=[str(ROOT / "src")],
     binaries=binaries,
     datas=datas,
-    hiddenimports=hiddenimports,
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -61,7 +73,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=str(icon_path),
+    icon=str(icon_path) if icon_path else None,
 )
 
 coll = COLLECT(
@@ -74,9 +86,10 @@ coll = COLLECT(
     name="Bitsonora",
 )
 
-app = BUNDLE(
-    coll,
-    name="Bitsonora.app",
-    icon=str(icon_path),
-    bundle_identifier="com.malikalamsyah99.bitsonora",
-)
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="Bitsonora.app",
+        icon=str(icon_path),
+        bundle_identifier="com.malikalamsyah99.bitsonora",
+    )
